@@ -1,0 +1,33 @@
+local strings = require("pytrize.strings")
+
+describe("split_once", function()
+  it("splits on first occurrence of separator", function()
+    local first, second = strings.split_once("a::b::c", "::", { plain = true })
+    assert.are.equal("a", first)
+    assert.are.equal("b::c", second)
+  end)
+
+  it("returns nil second when separator not found", function()
+    local first, second = strings.split_once("abc", "::", { plain = true })
+    assert.are.equal("abc", first)
+    assert.is_nil(second)
+  end)
+
+  it("splits from the right when right=true", function()
+    local first, second = strings.split_once("a-b-c", "-", { plain = true, right = true })
+    assert.are.equal("a-b", first)
+    assert.are.equal("c", second)
+  end)
+
+  it("handles separator at start", function()
+    local first, second = strings.split_once("::abc", "::", { plain = true })
+    assert.are.equal("", first)
+    assert.are.equal("abc", second)
+  end)
+
+  it("handles separator at end", function()
+    local first, second = strings.split_once("abc::", "::", { plain = true })
+    assert.are.equal("abc", first)
+    assert.are.equal("", second)
+  end)
+end)

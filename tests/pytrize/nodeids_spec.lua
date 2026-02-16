@@ -1,0 +1,32 @@
+local nodeids = require("pytrize.nodeids")
+
+describe("parse_raw", function()
+  it("parses a full nodeid with file, func, and params", function()
+    local result = nodeids.parse_raw("test_file.py::test_func[param1-param2]")
+    assert.are.equal("test_file.py", result.file)
+    assert.are.equal("test_func", result.func_name)
+    assert.are.equal("param1-param2]", result.params)
+    -- param_start_idx: "test_file.py::" = 14 chars, "test_func[" = 10 chars -> index 25
+    assert.are.equal(25, result.param_start_idx)
+  end)
+
+  it("parses nodeid without file", function()
+    local result = nodeids.parse_raw("test_func[param1]")
+    assert.is_nil(result.file)
+    assert.are.equal("test_func", result.func_name)
+    assert.are.equal("param1]", result.params)
+    assert.are.equal(11, result.param_start_idx)
+  end)
+
+  it("returns nil when no params (no bracket)", function()
+    local result = nodeids.parse_raw("test_file.py::test_func")
+    assert.is_nil(result)
+  end)
+
+  it("handles nested brackets in params", function()
+    local result = nodeids.parse_raw("test_file.py::test_func[param[0]-param[1]]")
+    assert.are.equal("test_file.py", result.file)
+    assert.are.equal("test_func", result.func_name)
+    assert.are.equal("param[0]-param[1]]", result.params)
+  end)
+end)

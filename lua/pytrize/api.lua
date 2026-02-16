@@ -53,4 +53,10 @@ M.jump_fixture = function()
   jump.to_fixture_declaration()
 end
 
+M.rename_fixture = function()
+  local rename = require('pytrize.rename')
+
+  rename.rename_fixture()
+end
+
 return M
