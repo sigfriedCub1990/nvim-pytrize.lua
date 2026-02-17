@@ -5,6 +5,9 @@ local warn = require('pytrize.warn').warn
 local paths = require('pytrize.paths')
 local ts_utils = require('pytrize.ts')
 
+local function hrtime() return (vim.uv or vim.loop).hrtime() end
+local function ms(t) return string.format('%.1fms', t / 1e6) end
+
 local function get_fixture_name()
   return vim.fn.expand('<cword>')
 end
@@ -222,11 +225,15 @@ local function rename(old_name, new_name)
     return
   end
 
+  local t0 = hrtime()
+
   local py_files = find_python_files(root_dir, old_name)
   if #py_files == 0 then
     warn(string.format('No Python files contain "%s"', old_name))
     return
   end
+
+  local t_grep = hrtime()
 
   -- First pass: determine which files to process. Only rename in files where
   -- the fixture resolves to the current file (not shadowed by a closer definition).
@@ -242,6 +249,8 @@ local function rename(old_name, new_name)
       end
     end
   end
+
+  local t_scope = hrtime()
 
   local total_replacements = 0
   local files_changed = 0
@@ -277,13 +286,22 @@ local function rename(old_name, new_name)
     end
   end
 
+  local t_end = hrtime()
+
   if total_replacements == 0 then
     warn(string.format('No fixture references found for "%s"', old_name))
   else
-    vim.notify(string.format(
+    local msg = string.format(
       'Pytrize: Renamed "%s" -> "%s" in %d file(s) (%d occurrence(s))',
       old_name, new_name, files_changed, total_replacements
-    ), vim.log.levels.INFO)
+    )
+    if require('pytrize.settings').settings.metrics then
+      msg = msg .. string.format(
+        '\n  total=%s  grep=%s  scoping=%s  apply=%s',
+        ms(t_end - t0), ms(t_grep - t0), ms(t_scope - t_grep), ms(t_end - t_scope)
+      )
+    end
+    vim.notify(msg, vim.log.levels.INFO)
   end
 end
 
