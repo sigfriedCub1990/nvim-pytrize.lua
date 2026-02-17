@@ -52,7 +52,7 @@ For example using [`lazy.nvim`](https://github.com/folke/lazy.nvim):
 use { -- pytrize {{{
   'AckslD/nvim-pytrize.lua',
   ft = 'python', -- Load only for python files
-  opt = {},
+  opts = {},
   -- uncomment if you want to lazy load
   -- cmd = {'Pytrize', 'PytrizeClear', 'PytrizeJump'},
 } -- }}}
