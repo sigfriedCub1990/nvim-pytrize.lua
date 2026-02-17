@@ -18,13 +18,12 @@ jobs:
           neovim: true
           version: ${{ matrix.neovim-version }}
 
-      - name: Install Python treesitter parser
+      - name: Compile Python treesitter parser
         run: |
-          git clone --depth 1 https://github.com/nvim-treesitter/nvim-treesitter /tmp/nvim-treesitter
-          nvim --headless \
-            --cmd "set runtimepath+=/tmp/nvim-treesitter" \
-            -c "TSInstallSync python" \
-            -c "q"
+          git clone --depth 1 https://github.com/tree-sitter/tree-sitter-python /tmp/tree-sitter-python
+          mkdir -p parser
+          cc -shared -fPIC -o parser/python.so -I /tmp/tree-sitter-python/src \
+            /tmp/tree-sitter-python/src/parser.c /tmp/tree-sitter-python/src/scanner.c
 
       - name: Run tests
         run: make test
