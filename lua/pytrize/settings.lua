@@ -6,6 +6,7 @@ local warn = require('pytrize.warn').warn
 M.settings = {
     no_commands = false,
     highlight = 'LineNr',
+    metrics = false,
     -- preferred_input = 'telescope',
 }
 

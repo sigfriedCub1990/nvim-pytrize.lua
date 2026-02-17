@@ -56,7 +56,11 @@ use { -- pytrize {{{
   -- cmd = {'Pytrize', 'PytrizeClear', 'PytrizeJump'},
   -- uncomment if you want to lazy load but not use the commands
   -- module = 'pytrize',
-  config = 'require("pytrize").setup()',
+  config = function()
+    require("pytrize").setup({
+      -- metrics = true, -- uncomment to log timing info for jump and rename
+    })
+  end,
 } -- }}}
 ```
 
@@ -68,7 +72,9 @@ For example using [`lazy.nvim`](https://github.com/folke/lazy.nvim):
   version = '*',
   dependencies = { 'nvim-lua/plenary' },
   ft = 'python', -- Load only for python files
-  opts = {},
+  opts = {
+    -- metrics = true, -- uncomment to log timing info for jump and rename
+  },
   -- uncomment if you want to lazy load
   -- cmd = {'Pytrize', 'PytrizeClear', 'PytrizeJump'},
 } -- }}}
@@ -84,6 +90,7 @@ Requires [`plenary.nvim`](https://github.com/nvim-lua/plenary.nvim).
 {
   no_commands = false,
   highlight = 'LineNr',
+  metrics = false,
   preferred_input = 'telescope',
 }
 ```
@@ -92,6 +99,7 @@ where:
 
 - `no_commands` can be set to `true` and the commands `Pytrize` etc won't be declared.
 - `highlight` defines the highlighting used for the virtual text.
+- `metrics` when set to `true`, logs timing information via `vim.notify` after each jump-to-fixture and rename operation. Useful for understanding performance in large projects. The jump reports total time and index-build time; the rename reports total, grep, scoping (fixture resolution), and apply time.
 - `preferred_input` which method to query input to prefer (if it's installed), see the [Input](#input)-section below.
 
 ## Details
