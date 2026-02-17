@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        neovim-version: [stable, nightly]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.neovim-version }}
+
+      - name: Install Python treesitter parser
+        run: |
+          git clone --depth 1 https://github.com/nvim-treesitter/nvim-treesitter /tmp/nvim-treesitter
+          nvim --headless \
+            --cmd "set runtimepath+=/tmp/nvim-treesitter" \
+            -c "TSInstallSync python" \
+            -c "q"
+
+      - name: Run tests
+        run: make test
