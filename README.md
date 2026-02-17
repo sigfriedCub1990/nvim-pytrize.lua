@@ -29,7 +29,7 @@ Another issue is knowing where a certain fixture is defined and what it does.
 
 ## What does the plugin do?
 
-Three things:
+Several things:
 
 - Populates virtual text at the entries of `pytest.mark.parametrize` (see gif above), such that you can easily see which one is which.
   Done by calling `Pytrize` (and `PytrizeClear` to clear them).
@@ -41,6 +41,9 @@ Three things:
 - Provides a command to jump to the declaration of the fixture under the cursor (by name), see [fixture](#jump-to-fixture) below.
   Done by calling `PytrizeJumpFixture`.
   Alternatively `lua require('pytrize.api').jump_fixture()`.
+- Provides a command to rename the fixture under the cursor (by name), see [fixture](#rename-fixture) below.
+  Done by calling `PytrizeRenameFixture`.
+  Alternatively `lua require('pytrize.api').rename_fixture()`.
 
 ## Installation
 
@@ -101,6 +104,10 @@ where:
 
 To jump to the declaration of a fixture under the cursor, do `PytrizeJumpFixture`:
 ![pytrize_fixture](https://user-images.githubusercontent.com/23341710/145707800-dcd49ae2-8fb1-46cc-8895-ed78ee5365b9.gif)
+
+## Rename fixture
+
+To rename the fixture under the cursor, do `PytrizeRenameFixture`:
 
 ## Input
 
