@@ -229,6 +229,131 @@ describe("find_rename_positions - combined", function()
 	end)
 end)
 
+describe("find_rename_positions - cross-file isolation", function()
+	it("only renames the fixture in the current buffer, not in another file with the same fixture", function()
+		local bufnr_a = create_python_buf({
+			"import pytest",
+			"",
+			"@pytest.fixture",
+			"def my_fixture():",
+			"    return 1",
+			"",
+			"def test_a(my_fixture):",
+			"    assert my_fixture",
+		})
+		local bufnr_b = create_python_buf({
+			"import pytest",
+			"",
+			"@pytest.fixture",
+			"def my_fixture():",
+			"    return 2",
+			"",
+			"def test_b(my_fixture):",
+			"    assert my_fixture",
+		})
+
+		-- Rename only in buffer A
+		local positions = rename._find_rename_positions(bufnr_a, "my_fixture")
+		assert.are.equal(3, #positions) -- def name, param, body ref
+		rename._apply_renames(bufnr_a, positions, "renamed_fix")
+
+		-- Buffer A is renamed
+		local lines_a = vim.api.nvim_buf_get_lines(bufnr_a, 0, -1, false)
+		assert.are.equal("def renamed_fix():", lines_a[4])
+		assert.are.equal("def test_a(renamed_fix):", lines_a[7])
+		assert.are.equal("    assert renamed_fix", lines_a[8])
+
+		-- Buffer B is untouched
+		local lines_b = vim.api.nvim_buf_get_lines(bufnr_b, 0, -1, false)
+		assert.are.equal("def my_fixture():", lines_b[4])
+		assert.are.equal("def test_b(my_fixture):", lines_b[7])
+		assert.are.equal("    assert my_fixture", lines_b[8])
+
+		vim.api.nvim_buf_delete(bufnr_a, { force = true })
+		vim.api.nvim_buf_delete(bufnr_b, { force = true })
+	end)
+end)
+
+local tmp_root = "/tmp/pytrize_rename_scope_test"
+
+local function write_py(path, lines)
+	local dir = vim.fn.fnamemodify(path, ":h")
+	vim.fn.mkdir(dir, "p")
+	local f = io.open(path, "w")
+	f:write(table.concat(lines, "\n") .. "\n")
+	f:close()
+end
+
+local function read_file_lines(path)
+	local f = io.open(path, "r")
+	local content = f:read("*a")
+	f:close()
+	local lines = vim.split(content, "\n")
+	if lines[#lines] == "" then
+		table.remove(lines)
+	end
+	return lines
+end
+
+describe("rename - cross-file fixture scoping", function()
+	after_each(function()
+		-- Close all buffers from the tmp dir
+		for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+			local name = vim.api.nvim_buf_get_name(bufnr)
+			if name:find(tmp_root, 1, true) then
+				vim.api.nvim_buf_delete(bufnr, { force = true })
+			end
+		end
+		vim.fn.delete(tmp_root, "rf")
+	end)
+
+	it("renaming fixture in conftest only renames usage in file_a, not in file_b which has its own definition", function()
+		vim.fn.mkdir(tmp_root .. "/.pytest_cache", "p")
+
+		write_py(tmp_root .. "/conftest.py", {
+			"import pytest",
+			"",
+			"@pytest.fixture",
+			"def my_fixture():",
+			"    return 'from conftest'",
+		})
+		write_py(tmp_root .. "/test_a.py", {
+			"def test_uses_conftest(my_fixture):",
+			"    assert my_fixture",
+		})
+		write_py(tmp_root .. "/test_b.py", {
+			"import pytest",
+			"",
+			"@pytest.fixture",
+			"def my_fixture():",
+			"    return 'local to b'",
+			"",
+			"def test_uses_local(my_fixture):",
+			"    assert my_fixture",
+		})
+
+		-- Open conftest.py as the current buffer (where rename is initiated)
+		vim.cmd("edit " .. tmp_root .. "/conftest.py")
+
+		rename._rename("my_fixture", "renamed_fix")
+
+		-- conftest.py: definition is renamed
+		local conftest_lines = read_file_lines(tmp_root .. "/conftest.py")
+		assert.are.equal("def renamed_fix():", conftest_lines[4])
+
+		-- test_a.py: consumer is renamed (uses conftest fixture)
+		local a_lines = read_file_lines(tmp_root .. "/test_a.py")
+		assert.are.equal("def test_uses_conftest(renamed_fix):", a_lines[1])
+		assert.are.equal("    assert renamed_fix", a_lines[2])
+
+		-- test_b.py: untouched (has its own fixture with the same name)
+		local b_lines = read_file_lines(tmp_root .. "/test_b.py")
+		assert.are.equal("def my_fixture():", b_lines[4])
+		assert.are.equal("def test_uses_local(my_fixture):", b_lines[7])
+		assert.are.equal("    assert my_fixture", b_lines[8])
+	end)
+end)
+
 describe("apply_renames", function()
 	it("replaces identifiers in buffer", function()
 		local bufnr = create_python_buf({

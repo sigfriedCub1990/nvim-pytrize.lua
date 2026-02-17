@@ -228,10 +228,25 @@ local function rename(old_name, new_name)
     return
   end
 
+  -- First pass: determine which files to process. Only rename in files where
+  -- the fixture resolves to the current file (not shadowed by a closer definition).
+  local files_to_process = {}
+  for _, filepath in ipairs(py_files) do
+    if filepath == current_file then
+      table.insert(files_to_process, filepath)
+    else
+      local index = ts_utils.build_fixture_index(filepath, root_dir)
+      local resolved = index[old_name]
+      if resolved and resolved.file == current_file then
+        table.insert(files_to_process, filepath)
+      end
+    end
+  end
+
   local total_replacements = 0
   local files_changed = 0
 
-  for _, filepath in ipairs(py_files) do
+  for _, filepath in ipairs(files_to_process) do
     local existing_bufnr = vim.fn.bufnr(filepath)
     local was_loaded = existing_bufnr ~= -1 and vim.fn.bufloaded(existing_bufnr) == 1
 
@@ -293,5 +308,6 @@ end
 -- Internal exports for testing
 M._find_rename_positions = find_rename_positions
 M._apply_renames = apply_renames
+M._rename = rename
 
 return M
