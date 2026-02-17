@@ -46,6 +46,18 @@ use { -- pytrize {{{
   config = 'require("pytrize").setup()',
 } -- }}}
 ```
+
+For example using [`lazy.nvim`](https://github.com/folke/lazy.nvim):
+```lua
+use { -- pytrize {{{
+  'AckslD/nvim-pytrize.lua',
+  ft = 'python', -- Load only for python files
+  opt = {},
+  -- uncomment if you want to lazy load
+  -- cmd = {'Pytrize', 'PytrizeClear', 'PytrizeJump'},
+} -- }}}
+```
+
 Requires [`plenary.nvim`](https://github.com/nvim-lua/plenary.nvim).
 
 ## Configuration
