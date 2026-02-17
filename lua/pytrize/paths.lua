@@ -28,6 +28,33 @@ M.split_at_root = function(file)
     warn("couldn't find the pytest root dir")
 end
 
+M.get_conftest_chain = function(filepath, root_dir)
+    local dir = vim.fn.fnamemodify(filepath, ':h')
+    local chain = {}
+
+    -- Walk from root_dir down to the file's directory.
+    -- Build the list of directories from root to file dir, then check each for conftest.py.
+    local dirs = {}
+    local current = dir
+    while #current >= #root_dir do
+        table.insert(dirs, 1, current)
+        local parent = vim.fn.fnamemodify(current, ':h')
+        if parent == current then
+            break
+        end
+        current = parent
+    end
+
+    for _, d in ipairs(dirs) do
+        local conftest = d .. '/conftest.py'
+        if vim.fn.filereadable(conftest) == 1 then
+            table.insert(chain, conftest)
+        end
+    end
+
+    return chain
+end
+
 M.get_nodeids_path = function(rootdir)
     return join_path{rootdir, '.pytest_cache', 'v', 'cache', 'nodeids'}
 end
