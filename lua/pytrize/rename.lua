@@ -3,6 +3,7 @@ local M = {}
 local ts = vim.treesitter
 local warn = require('pytrize.warn').warn
 local paths = require('pytrize.paths')
+local ts_utils = require('pytrize.ts')
 
 local function get_fixture_name()
   return vim.fn.expand('<cword>')
@@ -15,26 +16,6 @@ local function find_python_files(root_dir, name)
     root_dir
   ))
   return result
-end
-
-local function walk(node, callback)
-  callback(node)
-  for child in node:iter_children() do
-    walk(child, callback)
-  end
-end
-
-local function is_fixture_decorator(node, bufnr)
-  local node_type = node:type()
-  if node_type == 'attribute' then
-    return ts.get_node_text(node, bufnr) == 'pytest.fixture'
-  elseif node_type == 'call' then
-    local func = node:field('function')[1]
-    if func and func:type() == 'attribute' then
-      return ts.get_node_text(func, bufnr) == 'pytest.fixture'
-    end
-  end
-  return false
 end
 
 local function get_param_name_node(param_node)
@@ -140,34 +121,16 @@ local find_rename_positions = function(bufnr, old_name)
 
   local positions = {}
 
-  walk(root, function(node)
-    local node_type = node:type()
-
-    -- Case A: Fixture definition
-    if node_type == 'decorated_definition' then
-      local has_fixture_decorator = false
-      for child in node:iter_children() do
-        if child:type() == 'decorator' then
-          for dchild in child:iter_children() do
-            if is_fixture_decorator(dchild, bufnr) then
-              has_fixture_decorator = true
-              break
-            end
-          end
-        end
-      end
-
-      if has_fixture_decorator then
-        local func = node:field('definition')[1]
-        if func and func:type() == 'function_definition' then
-          local name_node = func:field('name')[1]
-          if name_node and ts.get_node_text(name_node, bufnr) == old_name then
-            local row, col_start, _, col_end = name_node:range()
-            table.insert(positions, { row = row, col_start = col_start, col_end = col_end })
-          end
-        end
-      end
+  -- Case A: Fixture definitions
+  for _, def in ipairs(ts_utils.get_fixture_defs(bufnr)) do
+    if def.name == old_name then
+      local row, col_start, _, col_end = def.name_node:range()
+      table.insert(positions, { row = row, col_start = col_start, col_end = col_end })
     end
+  end
+
+  ts_utils.walk(root, function(node)
+    local node_type = node:type()
 
     -- Case B: Fixture consumer
     if node_type == 'function_definition' then
