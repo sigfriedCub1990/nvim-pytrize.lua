@@ -150,6 +150,34 @@ describe("scan_fixtures", function()
     os.remove(path)
   end)
 
+  it("returns col=0 for a top-level fixture", function()
+    local path = write_tmp_py("scan_col_top", {
+      "import pytest",
+      "",
+      "@pytest.fixture",
+      "def db():",
+      "    return 'connection'",
+    })
+    local fixtures = ts_utils.scan_fixtures(path)
+    assert.are.equal(0, fixtures.db.col)
+    os.remove(path)
+  end)
+
+  it("returns correct col for a fixture defined inside a class", function()
+    local path = write_tmp_py("scan_col_class", {
+      "import pytest",
+      "",
+      "class TestFixtures:",
+      "    @pytest.fixture",
+      "    def class_fix(self):",
+      "        return 42",
+    })
+    local fixtures = ts_utils.scan_fixtures(path)
+    assert.are.equal(5, fixtures.class_fix.linenr)
+    assert.are.equal(4, fixtures.class_fix.col)
+    os.remove(path)
+  end)
+
   it("cleans up buffer for files that were not previously loaded", function()
     local path = write_tmp_py("scan4", {
       "import pytest",
