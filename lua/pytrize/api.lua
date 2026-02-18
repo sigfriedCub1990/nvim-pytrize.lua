@@ -59,4 +59,10 @@ M.rename_fixture = function()
   rename.rename_fixture()
 end
 
+M.fixture_usages = function()
+  local usages = require('pytrize.usages')
+
+  usages.show_usages()
+end
+
 return M
