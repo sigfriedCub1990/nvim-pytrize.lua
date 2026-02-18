@@ -225,6 +225,7 @@ local function rename(old_name, new_name)
     return
   end
 
+  ts_utils.clear_scan_cache()
   local t0 = hrtime()
 
   local py_files = find_python_files(root_dir, old_name)

@@ -64,7 +64,17 @@ M.get_fixture_defs = function(bufnr)
   return defs
 end
 
+local scan_cache = {}
+
+M.clear_scan_cache = function()
+  scan_cache = {}
+end
+
 M.scan_fixtures = function(filepath)
+  if scan_cache[filepath] then
+    return scan_cache[filepath]
+  end
+
   local existing_bufnr = vim.fn.bufnr(filepath)
   local was_loaded = existing_bufnr ~= -1 and vim.fn.bufloaded(existing_bufnr) == 1
 
@@ -93,6 +103,8 @@ M.scan_fixtures = function(filepath)
       linenr = row + 1,
     }
   end
+
+  scan_cache[filepath] = fixtures
   return fixtures
 end
 

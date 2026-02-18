@@ -177,6 +177,7 @@ local function write_py(path, lines)
 end
 
 local function teardown()
+  ts_utils.clear_scan_cache()
   vim.fn.delete(tmp_root, "rf")
 end
 
