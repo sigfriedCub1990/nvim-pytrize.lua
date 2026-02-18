@@ -44,6 +44,9 @@ Several things:
 - Provides a command to rename the fixture under the cursor (by name), see [fixture](#rename-fixture) below.
   Done by calling `PytrizeRenameFixture`.
   Alternatively `lua require('pytrize.api').rename_fixture()`.
+- Provides a command to find all usages of the fixture under the cursor across the project, see [fixture usages](#fixture-usages) below.
+  Done by calling `PytrizeFixtureUsages`.
+  Alternatively `lua require('pytrize.api').fixture_usages()`.
 
 ## Installation
 
@@ -116,6 +119,13 @@ To jump to the declaration of a fixture under the cursor, do `PytrizeJumpFixture
 ## Rename fixture
 
 To rename the fixture under the cursor, do `PytrizeRenameFixture`:
+
+## Fixture usages
+
+To find all usages of the fixture under the cursor, do `PytrizeFixtureUsages`.
+
+Results are loaded into Neovim's quickfix list and the quickfix window is opened automatically.
+Each entry shows the file, line, and the line content where the fixture is used — as a parameter, a body reference, or inside `@pytest.mark.usefixtures(...)`. The fixture definition itself is excluded from the results.
 
 ## Input
 
