@@ -32,7 +32,7 @@ M.to_declaration = function()
     end
 
     open_file(location.file)
-    vim.api.nvim_win_set_cursor(0, {location.linenr, 0})
+    vim.api.nvim_win_set_cursor(0, {location.linenr, location.col})
 
     if require('pytrize.settings').settings.metrics then
         local total = hrtime() - t0

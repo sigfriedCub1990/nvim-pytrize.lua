@@ -97,10 +97,11 @@ M.scan_fixtures = function(filepath)
 
   local fixtures = {}
   for _, def in ipairs(defs) do
-    local row = def.name_node:start()
+    local row, col = def.func_node:start()
     fixtures[def.name] = {
       file = filepath,
       linenr = row + 1,
+      col = col,
     }
   end
 
