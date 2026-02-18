@@ -2,8 +2,23 @@ local M = {}
 
 local warn = require('pytrize.warn').warn
 
+local root_markers = {
+    '.pytest_cache',
+    'pyproject.toml',
+    'setup.py',
+    'setup.cfg',
+    'pytest.ini',
+    'tox.ini',
+    '.git',
+}
+
 local function is_root_dir(dir)
-    return vim.fn.finddir('.pytest_cache', dir) ~= ''
+    for _, marker in ipairs(root_markers) do
+        if vim.fn.finddir(marker, dir) ~= '' or vim.fn.findfile(marker, dir) ~= '' then
+            return true
+        end
+    end
+    return false
 end
 
 local function join_path(fragments)
@@ -18,7 +33,7 @@ end
 M.split_at_root = function(file)
     local dir_fragments = vim.fn.split(file, '/', 1)
     local rel_file_fragments = {}
-    while #dir_fragments do
+    while #dir_fragments > 0 do
         table.insert(rel_file_fragments, 1, table.remove(dir_fragments, #dir_fragments))
         local dir = join_path(dir_fragments)
         if is_root_dir(dir) then
