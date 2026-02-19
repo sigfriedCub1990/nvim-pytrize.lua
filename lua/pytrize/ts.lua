@@ -51,10 +51,23 @@ M.get_fixture_defs = function(bufnr)
       if func and func:type() == 'function_definition' then
         local name_node = func:field('name')[1]
         if name_node then
+          -- Detect enclosing class (decorated_definition → block → class_definition)
+          local class_start, class_end
+          local parent = node:parent()
+          if parent and parent:type() == 'block' then
+            local grandparent = parent:parent()
+            if grandparent and grandparent:type() == 'class_definition' then
+              local cs, _, ce, _ = grandparent:range()
+              class_start = cs + 1  -- 1-indexed
+              class_end = ce + 1
+            end
+          end
           table.insert(defs, {
             name = ts.get_node_text(name_node, bufnr),
             name_node = name_node,
             func_node = func,
+            class_start = class_start,
+            class_end = class_end,
           })
         end
       end
@@ -98,18 +111,52 @@ M.scan_fixtures = function(filepath)
   local fixtures = {}
   for _, def in ipairs(defs) do
     local row, col = def.func_node:start()
-    fixtures[def.name] = {
+    local entry = {
       file = filepath,
       linenr = row + 1,
       col = col,
+      class_start = def.class_start,
+      class_end = def.class_end,
     }
+    if fixtures[def.name] == nil then
+      fixtures[def.name] = { entry }
+    else
+      table.insert(fixtures[def.name], entry)
+    end
   end
 
   scan_cache[filepath] = fixtures
   return fixtures
 end
 
-M.build_fixture_index = function(filepath, root_dir)
+-- Resolve the best fixture from a list of candidates for a given cursor line.
+-- Prefers the candidate in the same class as the cursor; falls back to
+-- top-level fixtures, then to the last candidate.
+local function resolve_fixture(candidates, cursor_line)
+  if #candidates == 1 or cursor_line == nil then
+    return candidates[#candidates]
+  end
+
+  -- Try to find a candidate whose enclosing class contains cursor_line
+  for _, loc in ipairs(candidates) do
+    if loc.class_start and loc.class_end
+      and cursor_line >= loc.class_start and cursor_line <= loc.class_end then
+      return loc
+    end
+  end
+
+  -- Cursor is outside any class → prefer a top-level (classless) candidate
+  for _, loc in ipairs(candidates) do
+    if loc.class_start == nil then
+      return loc
+    end
+  end
+
+  -- Fallback: last candidate
+  return candidates[#candidates]
+end
+
+M.build_fixture_index = function(filepath, root_dir, cursor_line)
   local paths = require('pytrize.paths')
   local fixtures = {}
 
@@ -117,16 +164,16 @@ M.build_fixture_index = function(filepath, root_dir)
   local chain = paths.get_conftest_chain(filepath, root_dir)
   for _, conftest in ipairs(chain) do
     local cf = M.scan_fixtures(conftest)
-    for name, loc in pairs(cf) do
-      fixtures[name] = loc
+    for name, candidates in pairs(cf) do
+      fixtures[name] = candidates[#candidates]
     end
   end
 
   -- Scan the test file itself (fixtures defined here take priority)
   if vim.fn.filereadable(filepath) == 1 then
     local ff = M.scan_fixtures(filepath)
-    for name, loc in pairs(ff) do
-      fixtures[name] = loc
+    for name, candidates in pairs(ff) do
+      fixtures[name] = resolve_fixture(candidates, cursor_line)
     end
   end
 

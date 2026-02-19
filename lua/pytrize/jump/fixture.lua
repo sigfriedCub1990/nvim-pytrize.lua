@@ -21,8 +21,9 @@ M.to_declaration = function()
         return
     end
 
+    local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
     local t0 = hrtime()
-    local fixtures = ts_utils.build_fixture_index(filepath, root_dir)
+    local fixtures = ts_utils.build_fixture_index(filepath, root_dir, cursor_line)
     local t_index = hrtime()
 
     local location = fixtures[fixture]
