@@ -1,11 +1,11 @@
 local M = {}
 
-local warn = require('pytrize.warn').warn
+local warn = require("pytrize.warn").warn
 
 -- defaults
 M.settings = {
     no_commands = false,
-    highlight = 'LineNr',
+    highlight = "LineNr",
     metrics = false,
     -- preferred_input = 'telescope',
 }

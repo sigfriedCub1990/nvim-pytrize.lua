@@ -1,6 +1,6 @@
 local M = {}
 
-local settings = require('pytrize.settings')
+local settings = require("pytrize.settings")
 
 local function setup_commands()
     vim.cmd('command Pytrize lua require("pytrize.api").set()')

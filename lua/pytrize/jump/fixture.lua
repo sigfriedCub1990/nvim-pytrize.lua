@@ -1,17 +1,21 @@
 local M = {}
 
-local warn = require('pytrize.warn').warn
-local open_file = require('pytrize.jump.util').open_file
-local paths = require('pytrize.paths')
-local ts_utils = require('pytrize.ts')
+local warn = require("pytrize.warn").warn
+local open_file = require("pytrize.jump.util").open_file
+local paths = require("pytrize.paths")
+local ts_utils = require("pytrize.ts")
 
-local function hrtime() return (vim.uv or vim.loop).hrtime() end
-local function ms(t) return string.format('%.1fms', t / 1e6) end
+local function hrtime()
+    return (vim.uv or vim.loop).hrtime()
+end
+local function ms(t)
+    return string.format("%.1fms", t / 1e6)
+end
 
 M.to_declaration = function()
-    local fixture = vim.fn.expand('<cword>')
-    if fixture == '' then
-        warn('no word under cursor')
+    local fixture = vim.fn.expand("<cword>")
+    if fixture == "" then
+        warn("no word under cursor")
         return
     end
 
@@ -33,15 +37,12 @@ M.to_declaration = function()
     end
 
     open_file(location.file)
-    vim.api.nvim_win_set_cursor(0, {location.linenr, location.col})
+    vim.api.nvim_win_set_cursor(0, { location.linenr, location.col })
 
-    if require('pytrize.settings').settings.metrics then
+    if require("pytrize.settings").settings.metrics then
         local total = hrtime() - t0
         local index = t_index - t0
-        vim.notify(string.format(
-            'Pytrize jump: total=%s  index=%s',
-            ms(total), ms(index)
-        ), vim.log.levels.INFO)
+        vim.notify(string.format("Pytrize jump: total=%s  index=%s", ms(total), ms(index)), vim.log.levels.INFO)
     end
 end
 

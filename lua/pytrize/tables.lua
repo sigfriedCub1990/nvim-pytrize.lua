@@ -9,11 +9,11 @@ M.reverse = function(lst)
 end
 
 M.list_map = function(func, iterable)
-  local new = {}
-  for _, v in ipairs(iterable) do
-    table.insert(new, func(v))
-  end
-  return new
+    local new = {}
+    for _, v in ipairs(iterable) do
+        table.insert(new, func(v))
+    end
+    return new
 end
 
 return M
