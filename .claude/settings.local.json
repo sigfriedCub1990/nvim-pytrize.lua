@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(git -C /home/rsgarxia/code/github/nvim-pytrize.lua ls-tree:*)"
-    ]
-  }
-}
