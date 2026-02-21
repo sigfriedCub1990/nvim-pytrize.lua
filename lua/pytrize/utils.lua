@@ -34,7 +34,7 @@ M.with_buf = function(filepath, fn, opts)
     if not was_loaded then
         local saved_eventignore = vim.o.eventignore
         vim.o.eventignore = "all"
-        vim.fn.bufload(bufnr)
+        vim.fn.execute("call bufload(" .. bufnr .. ")")
         vim.api.nvim_set_option_value("filetype", "python", { buf = bufnr })
         vim.o.eventignore = saved_eventignore
     end
