@@ -1,6 +1,7 @@
 local M = {}
 
 local ts = vim.treesitter
+local utils = require("pytrize.utils")
 
 M.walk = function(node, callback)
     callback(node)
@@ -88,25 +89,19 @@ M.scan_fixtures = function(filepath)
         return scan_cache[filepath]
     end
 
-    local existing_bufnr = vim.fn.bufnr(filepath)
-    local was_loaded = existing_bufnr ~= -1 and vim.fn.bufloaded(existing_bufnr) == 1
+    local result = utils.with_buf(filepath, function(bufnr)
+        local ok, defs = pcall(M.get_fixture_defs, bufnr)
+        if not ok then
+            return nil
+        end
+        return defs
+    end, { force_delete = true })
 
-    local bufnr = vim.fn.bufadd(filepath)
-    if not was_loaded then
-        vim.fn.bufload(bufnr)
-    end
-
-    vim.api.nvim_set_option_value("filetype", "python", { buf = bufnr })
-
-    local ok, defs = pcall(M.get_fixture_defs, bufnr)
-
-    if not was_loaded then
-        vim.api.nvim_buf_delete(bufnr, { force = true })
-    end
-
-    if not ok then
+    if result == nil then
         return {}
     end
+
+    local defs = result
 
     local fixtures = {}
     for _, def in ipairs(defs) do

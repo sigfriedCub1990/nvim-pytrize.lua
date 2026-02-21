@@ -4,6 +4,7 @@ local ts = vim.treesitter
 local warn = require("pytrize.warn").warn
 local paths = require("pytrize.paths")
 local ts_utils = require("pytrize.ts")
+local utils = require("pytrize.utils")
 
 local function find_python_files(root_dir, name)
     return vim.fn.systemlist(string.format('grep -rl --include="*.py" "%s" "%s"', vim.fn.escape(name, '"\\'), root_dir))
@@ -167,31 +168,19 @@ local find_all_usages = function(fixture_name, root_dir)
     local items = {}
 
     for _, filepath in ipairs(py_files) do
-        local existing_bufnr = vim.fn.bufnr(filepath)
-        local was_loaded = existing_bufnr ~= -1 and vim.fn.bufloaded(existing_bufnr) == 1
+        utils.with_buf(filepath, function(bufnr)
+            local positions = find_usage_positions(bufnr, fixture_name)
+            local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
-        local bufnr = vim.fn.bufadd(filepath)
-        if not was_loaded then
-            vim.fn.bufload(bufnr)
-        end
-
-        vim.api.nvim_set_option_value("filetype", "python", { buf = bufnr })
-
-        local positions = find_usage_positions(bufnr, fixture_name)
-        local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-
-        for _, pos in ipairs(positions) do
-            table.insert(items, {
-                filename = filepath,
-                lnum = pos.row + 1,
-                col = pos.col_start + 1,
-                text = lines[pos.row + 1] or "",
-            })
-        end
-
-        if not was_loaded then
-            vim.api.nvim_buf_delete(bufnr, { force = false })
-        end
+            for _, pos in ipairs(positions) do
+                table.insert(items, {
+                    filename = filepath,
+                    lnum = pos.row + 1,
+                    col = pos.col_start + 1,
+                    text = lines[pos.row + 1] or "",
+                })
+            end
+        end)
     end
 
     return items

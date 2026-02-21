@@ -4,6 +4,7 @@ local ts = vim.treesitter
 local warn = require("pytrize.warn").warn
 local paths = require("pytrize.paths")
 local ts_utils = require("pytrize.ts")
+local utils = require("pytrize.utils")
 
 local function hrtime()
     return (vim.uv or vim.loop).hrtime()
@@ -256,33 +257,26 @@ local function rename(old_name, new_name)
     local files_changed = 0
 
     for _, filepath in ipairs(files_to_process) do
-        local existing_bufnr = vim.fn.bufnr(filepath)
-        local was_loaded = existing_bufnr ~= -1 and vim.fn.bufloaded(existing_bufnr) == 1
+        local abort = false
+        utils.with_buf(filepath, function(bufnr)
+            local positions = find_rename_positions(bufnr, old_name)
+            if positions == nil then
+                abort = true
+                return
+            end
 
-        local bufnr = vim.fn.bufadd(filepath)
-        if not was_loaded then
-            vim.fn.bufload(bufnr)
-        end
+            if #positions > 0 then
+                local count = apply_renames(bufnr, positions, new_name)
+                total_replacements = total_replacements + count
+                files_changed = files_changed + 1
 
-        vim.api.nvim_set_option_value("filetype", "python", { buf = bufnr })
-
-        local positions = find_rename_positions(bufnr, old_name)
-        if positions == nil then
+                vim.api.nvim_buf_call(bufnr, function()
+                    vim.cmd("write")
+                end)
+            end
+        end)
+        if abort then
             return
-        end
-
-        if #positions > 0 then
-            local count = apply_renames(bufnr, positions, new_name)
-            total_replacements = total_replacements + count
-            files_changed = files_changed + 1
-
-            vim.api.nvim_buf_call(bufnr, function()
-                vim.cmd("write")
-            end)
-        end
-
-        if not was_loaded then
-            vim.api.nvim_buf_delete(bufnr, { force = false })
         end
     end
 
