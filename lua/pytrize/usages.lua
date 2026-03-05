@@ -48,6 +48,15 @@ M.show_usages = function()
         return
     end
 
+    local settings = require("pytrize.settings").settings
+    if settings.preferred_input == "fzf-lua" then
+        local ok, fzf = pcall(require, "pytrize.fzf")
+        if ok then
+            fzf.show_usages(items, fixture_name)
+            return
+        end
+    end
+
     vim.fn.setqflist(items, "r")
     vim.cmd("copen")
 end
