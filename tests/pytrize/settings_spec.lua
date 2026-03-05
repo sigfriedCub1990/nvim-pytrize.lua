@@ -25,12 +25,26 @@ describe("settings", function()
   end)
 
   it("does not crash on unknown key", function()
-    -- Stub vim.notify to avoid errors in headless mode
     local original_notify = vim.notify
     local notified = false
     vim.notify = function() notified = true end
     settings_mod.update({ nonexistent_key = "value" })
     vim.notify = original_notify
     assert.is_true(notified)
+  end)
+
+  it("rejects wrong type for a setting", function()
+    local original_notify = vim.notify
+    local warned = false
+    vim.notify = function(msg)
+      if type(msg) == "string" and msg:find("invalid type") then
+        warned = true
+      end
+    end
+    settings_mod.update({ highlight = 123 })  -- should be string, not number
+    vim.notify = original_notify
+    assert.is_true(warned)
+    -- value should not have changed
+    assert.are.equal("LineNr", settings_mod.settings.highlight)
   end)
 end)

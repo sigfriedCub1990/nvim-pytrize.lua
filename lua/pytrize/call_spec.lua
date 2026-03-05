@@ -21,25 +21,25 @@ local get_root = function(bufnr)
     return trees[1]:root()
 end
 
+local PARAM_QUERY = parse_query(
+    "python",
+    [[
+      (decorated_definition (
+        decorator (
+          call
+            function: ((attribute) @param)
+        )
+      ))
+    ]]
+)
+
 local get_param_call_nodes = function(bufnr)
     local tsroot = get_root(bufnr)
     if tsroot == nil then
         return {}
     end
-    local query = parse_query(
-        "python",
-        -- TODO not sure why eg (#eq? @param "pytest.mark.parametrize") does not work
-        [[
-          (decorated_definition (
-            decorator (
-              call
-                function: ((attribute) @param)
-            )
-          ))
-        ]]
-    )
     local nodes = {}
-    for _, node, _ in query:iter_captures(tsroot) do
+    for _, node, _ in PARAM_QUERY:iter_captures(tsroot, bufnr) do
         if ts.get_node_text(node, bufnr) == "pytest.mark.parametrize" then
             table.insert(nodes, node:parent())
         end
