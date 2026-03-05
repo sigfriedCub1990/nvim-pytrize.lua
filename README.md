@@ -94,7 +94,7 @@ Requires [`plenary.nvim`](https://github.com/nvim-lua/plenary.nvim).
   no_commands = false,
   highlight = 'LineNr',
   metrics = false,
-  preferred_input = 'telescope',
+  preferred_input = 'telescope', -- or 'fzf-lua'
 }
 ```
 
@@ -103,7 +103,7 @@ where:
 - `no_commands` can be set to `true` and the commands `Pytrize` etc won't be declared.
 - `highlight` defines the highlighting used for the virtual text.
 - `metrics` when set to `true`, logs timing information via `vim.notify` after each jump-to-fixture and rename operation. Useful for understanding performance in large projects. The jump reports total time and index-build time; the rename reports total, grep, scoping (fixture resolution), and apply time.
-- `preferred_input` which method to query input to prefer (if it's installed), see the [Input](#input)-section below.
+- `preferred_input` which method to query input to prefer (if it's installed), see the [Input](#input)-section below. For fixture usages, setting this to `'fzf-lua'` will display results in an [`fzf-lua`](https://github.com/ibhagwan/fzf-lua) picker instead of the quickfix list.
 
 ## Details
 
@@ -138,8 +138,9 @@ _________________________________ test[None2-a1-b-c1-9] ________________________
 
 or similar.
 If you trigger to jump to the declaration of the parameters in this case `pytrize` will find all files in the cache that matches this test-case id and if there is more than one ask you which one to jump to.
-Currently three input methods are supported:
+Currently four input methods are supported:
 
+- [`fzf-lua`](https://github.com/ibhagwan/fzf-lua) — used for fixture usages when `preferred_input = 'fzf-lua'`. Results are shown in an fzf picker with preview, and you can open files with Enter, `ctrl-s` (split), `ctrl-v` (vsplit), or `ctrl-t` (tab).
 - [`telescope`](https://github.com/nvim-telescope/telescope.nvim)
   ![pytrize_input_telescope](https://user-images.githubusercontent.com/23341710/145381466-42152977-f412-425d-9ddb-cc0c4dfde4fb.gif)
 - [`nui`](https://github.com/MunifTanjim/nui.nvim)
