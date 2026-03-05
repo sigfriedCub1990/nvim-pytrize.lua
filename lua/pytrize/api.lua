@@ -2,20 +2,13 @@ local M = {}
 
 M.clear = function(bufnr)
     local marks = require("pytrize.marks")
-
-    if bufnr == nil then
-        bufnr = 0
-    end
-    marks.clear(bufnr)
+    marks.clear(bufnr or 0)
 end
 
 M.set = function(bufnr)
     local cs = require("pytrize.call_spec")
     local marks = require("pytrize.marks")
-
-    if bufnr == nil then
-        bufnr = 0
-    end
+    bufnr = bufnr or 0
     marks.clear(bufnr)
     local call_specs_per_func = cs.get_calls(bufnr)
     if call_specs_per_func == nil then
