@@ -1,31 +1,71 @@
 local utils = require("pytrize.utils")
 
-describe("min", function()
-  it("returns the smaller value", function()
-    assert.are.equal(1, utils.min(1, 2))
-    assert.are.equal(1, utils.min(2, 1))
-  end)
+describe("with_buf", function()
+    it("loads a file into a buffer, calls fn, and cleans up", function()
+        local tmp = vim.fn.tempname() .. ".py"
+        local f = io.open(tmp, "w")
+        f:write("x = 1\n")
+        f:close()
 
-  it("returns the value when equal", function()
-    assert.are.equal(5, utils.min(5, 5))
-  end)
+        local result = utils.with_buf(tmp, function(bufnr)
+            local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+            return lines[1]
+        end, { force_delete = true })
 
-  it("works with negative numbers", function()
-    assert.are.equal(-3, utils.min(-3, -1))
-  end)
-end)
+        assert.are.equal("x = 1", result)
 
-describe("max", function()
-  it("returns the larger value", function()
-    assert.are.equal(2, utils.max(1, 2))
-    assert.are.equal(2, utils.max(2, 1))
-  end)
+        -- buffer should have been cleaned up
+        assert.are.equal(-1, vim.fn.bufnr(tmp))
+        vim.fn.delete(tmp)
+    end)
 
-  it("returns the value when equal", function()
-    assert.are.equal(5, utils.max(5, 5))
-  end)
+    it("suppresses file-info messages by loading via vim.fn.execute", function()
+        local tmp = vim.fn.tempname() .. ".py"
+        local f = io.open(tmp, "w")
+        f:write("x = 1\n")
+        f:close()
 
-  it("works with negative numbers", function()
-    assert.are.equal(-1, utils.max(-3, -1))
-  end)
+        -- The C-level file-info message ("path" NL, NB) that bufload()
+        -- emits does not appear in :messages or headless output, so we
+        -- cannot assert on captured text.  Instead we verify the
+        -- suppression mechanism: with_buf must route through
+        -- vim.fn.execute() which uses :redir to swallow all output.
+        local original_execute = vim.fn.execute
+        local execute_calls = {}
+        vim.fn.execute = function(cmd)
+            table.insert(execute_calls, cmd)
+            return original_execute(cmd)
+        end
+
+        utils.with_buf(tmp, function(_) end, { force_delete = true })
+
+        vim.fn.execute = original_execute
+
+        -- At least one call should be the bufload wrapper
+        local found = false
+        for _, cmd in ipairs(execute_calls) do
+            if type(cmd) == "string" and cmd:find("bufload") then
+                found = true
+                break
+            end
+        end
+        assert.is_true(found, "with_buf should call vim.fn.execute() with bufload to suppress file-info messages")
+
+        vim.fn.delete(tmp)
+    end)
+
+    it("propagates errors from fn", function()
+        local tmp = vim.fn.tempname() .. ".py"
+        local f = io.open(tmp, "w")
+        f:write("x = 1\n")
+        f:close()
+
+        assert.has_error(function()
+            utils.with_buf(tmp, function(_)
+                error("test error")
+            end, { force_delete = true })
+        end)
+
+        vim.fn.delete(tmp)
+    end)
 end)

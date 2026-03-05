@@ -7,8 +7,6 @@ local paths = require('pytrize.paths')
 local warn = require('pytrize.warn').warn
 local open_file = require('pytrize.jump.util').open_file
 local get_nodeids_path = require('pytrize.paths').get_nodeids_path
-local min = require('pytrize.utils').min
-local max = require('pytrize.utils').max
 
 local function query_file(func_name, callback)
   local rootdir, _ = paths.split_at_root(vim.api.nvim_buf_get_name(0))
@@ -55,7 +53,7 @@ local function jump_to_nodeid_at_cursor(callback)
   local nodeid = nids.parse_raw(line:sub(i))
   local pattern_position = col_num + 1 - (i - 1)  -- cursor relative to match
   local param_position = pattern_position - nodeid.param_start_idx + 1  -- cursor relative to params
-  param_position = min(max(1, param_position), nodeid.params:len())  -- restrict it to be inside
+  param_position = math.min(math.max(1, param_position), nodeid.params:len())  -- restrict it to be inside
   if nodeid == nil then
     warn("couldn't parse nodeid under cursor")
     return

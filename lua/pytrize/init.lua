@@ -24,9 +24,7 @@ local function setup_commands()
 end
 
 M.setup = function(opts)
-    if opts == nil then
-        opts = {}
-    end
+    opts = opts or {}
     settings.update(opts)
     if not settings.settings.no_commands then
         setup_commands()
