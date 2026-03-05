@@ -80,8 +80,24 @@ end
 
 local scan_cache = {}
 
-M.clear_scan_cache = function()
-    scan_cache = {}
+-- Auto-invalidate cache when Python files are saved or deleted
+local cache_group = vim.api.nvim_create_augroup("PytrizeCache", { clear = true })
+vim.api.nvim_create_autocmd({ "BufWritePost", "BufDelete" }, {
+    group = cache_group,
+    pattern = "*.py",
+    callback = function(args)
+        local filepath = vim.api.nvim_buf_get_name(args.buf)
+        scan_cache[filepath] = nil
+    end,
+})
+
+---@param filepath? string Clear a single entry, or all entries if nil.
+M.clear_scan_cache = function(filepath)
+    if filepath then
+        scan_cache[filepath] = nil
+    else
+        scan_cache = {}
+    end
 end
 
 M.scan_fixtures = function(filepath)
