@@ -1,10 +1,14 @@
 local M = {}
 
+--- Clear pytrize virtual text from buffer.
+---@param bufnr? integer Buffer number (0 or nil for current buffer)
 M.clear = function(bufnr)
     local marks = require("pytrize.marks")
     marks.clear(bufnr or 0)
 end
 
+--- Set pytrize virtual text for parametrize entries in buffer.
+---@param bufnr? integer Buffer number (0 or nil for current buffer)
 M.set = function(bufnr)
     local cs = require("pytrize.call_spec")
     local marks = require("pytrize.marks")
@@ -38,24 +42,28 @@ M.set = function(bufnr)
     end
 end
 
+--- Jump to the parametrize entry declaration under cursor.
 M.jump = function()
     local jump = require("pytrize.jump")
 
     jump.to_param_declaration()
 end
 
+--- Jump to fixture definition under cursor.
 M.jump_fixture = function()
     local jump = require("pytrize.jump")
 
     jump.to_fixture_declaration()
 end
 
+--- Rename fixture under cursor across the project.
 M.rename_fixture = function()
     local rename = require("pytrize.rename")
 
     rename.rename_fixture()
 end
 
+--- Show all usages of fixture under cursor in quickfix list.
 M.fixture_usages = function()
     local usages = require("pytrize.usages")
 

@@ -23,6 +23,8 @@ local function setup_commands()
     end, { desc = "Show fixture usages in quickfix list" })
 end
 
+--- Configure the pytrize plugin.
+---@param opts? PytrizeSettings
 M.setup = function(opts)
     opts = opts or {}
     settings.update(opts)

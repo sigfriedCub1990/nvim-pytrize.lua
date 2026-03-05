@@ -1,8 +1,7 @@
 local M = {}
 
 local ts = vim.treesitter
-local ts_query = ts.query
-local parse_query = ts_query.parse or ts_query.parse_query
+local parse_query = vim.treesitter.query.parse
 
 local warn = require("pytrize.warn").warn
 local tbls = require("pytrize.tables")
