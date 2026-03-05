@@ -6,7 +6,25 @@ local get_nodeids_path = require("pytrize.paths").get_nodeids_path
 
 local function get_raw_nodeids(rootdir)
     local nodeids_path = get_nodeids_path(rootdir)
-    return vim.fn.json_decode(vim.fn.readfile(nodeids_path))
+
+    if vim.fn.filereadable(nodeids_path) ~= 1 then
+        warn(string.format("Nodeids file not found: %s\nHave you run pytest?", nodeids_path))
+        return {}
+    end
+
+    local ok_read, content = pcall(vim.fn.readfile, nodeids_path)
+    if not ok_read then
+        warn(string.format("Failed to read nodeids file: %s", nodeids_path))
+        return {}
+    end
+
+    local ok_json, result = pcall(vim.fn.json_decode, content)
+    if not ok_json then
+        warn(string.format("Failed to parse nodeids JSON: %s", nodeids_path))
+        return {}
+    end
+
+    return result
 end
 
 M.parse_raw = function(raw_nodeid)

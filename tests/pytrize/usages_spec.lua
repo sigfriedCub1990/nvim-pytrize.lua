@@ -28,7 +28,7 @@ describe("find_usage_positions", function()
 			"def test_foo(my_fixture):",
 			"    assert my_fixture == 42",
 		})
-		local positions = usages._find_usage_positions(bufnr, "my_fixture")
+		local positions = usages._find_fixture_references(bufnr, "my_fixture")
 		-- param (row 0) + body ref (row 1)
 		assert.are.equal(2, #positions)
 		vim.api.nvim_buf_delete(bufnr, { force = true })
@@ -39,7 +39,7 @@ describe("find_usage_positions", function()
 			"def test_foo(my_fixture: MagicMock):",
 			"    my_fixture.assert_called()",
 		})
-		local positions = usages._find_usage_positions(bufnr, "my_fixture")
+		local positions = usages._find_fixture_references(bufnr, "my_fixture")
 		-- typed param (row 0) + body ref (row 1)
 		assert.are.equal(2, #positions)
 		vim.api.nvim_buf_delete(bufnr, { force = true })
@@ -53,7 +53,7 @@ describe("find_usage_positions", function()
 			"def test_foo(self):",
 			"    pass",
 		})
-		local positions = usages._find_usage_positions(bufnr, "my_fixture")
+		local positions = usages._find_fixture_references(bufnr, "my_fixture")
 		assert.are.equal(1, #positions)
 		vim.api.nvim_buf_delete(bufnr, { force = true })
 	end)
@@ -66,7 +66,7 @@ describe("find_usage_positions", function()
 			"def my_fixture():",
 			"    return 42",
 		})
-		local positions = usages._find_usage_positions(bufnr, "my_fixture")
+		local positions = usages._find_fixture_references(bufnr, "my_fixture")
 		assert.are.equal(0, #positions)
 		vim.api.nvim_buf_delete(bufnr, { force = true })
 	end)
@@ -76,7 +76,7 @@ describe("find_usage_positions", function()
 			"def test_foo(db):",
 			"    x = db.my_fixture",
 		})
-		local positions = usages._find_usage_positions(bufnr, "my_fixture")
+		local positions = usages._find_fixture_references(bufnr, "my_fixture")
 		assert.are.equal(0, #positions)
 		vim.api.nvim_buf_delete(bufnr, { force = true })
 	end)
@@ -86,7 +86,7 @@ describe("find_usage_positions", function()
 			"def test_foo(db):",
 			"    call(my_fixture=1)",
 		})
-		local positions = usages._find_usage_positions(bufnr, "my_fixture")
+		local positions = usages._find_fixture_references(bufnr, "my_fixture")
 		assert.are.equal(0, #positions)
 		vim.api.nvim_buf_delete(bufnr, { force = true })
 	end)
@@ -102,7 +102,7 @@ describe("find_usage_positions", function()
 			"def test_uses(my_fixture):",
 			"    assert my_fixture",
 		})
-		local positions = usages._find_usage_positions(bufnr, "my_fixture")
+		local positions = usages._find_fixture_references(bufnr, "my_fixture")
 		-- param (row 6) + body ref (row 7); definition on row 3 is excluded
 		assert.are.equal(2, #positions)
 		vim.api.nvim_buf_delete(bufnr, { force = true })
