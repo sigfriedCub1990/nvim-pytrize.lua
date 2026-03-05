@@ -8,13 +8,24 @@ local warn = require("pytrize.warn").warn
 local tbls = require("pytrize.tables")
 
 local get_root = function(bufnr)
-    local parser = ts.get_parser(bufnr)
-    local tstree = parser:parse()[1]
-    return tstree:root()
+    local ok, parser = pcall(ts.get_parser, bufnr, "python")
+    if not ok then
+        warn("Python treesitter parser not available")
+        return nil
+    end
+    local trees = parser:parse()
+    if not trees or #trees == 0 then
+        warn("Failed to parse buffer")
+        return nil
+    end
+    return trees[1]:root()
 end
 
 local get_param_call_nodes = function(bufnr)
     local tsroot = get_root(bufnr)
+    if tsroot == nil then
+        return {}
+    end
     local query = parse_query(
         "python",
         -- TODO not sure why eg (#eq? @param "pytest.mark.parametrize") does not work
@@ -38,7 +49,17 @@ end
 
 local get_second_arg_node = function(call_node)
     local arguments = call_node:field("arguments")[1]
-    return arguments:child(3)
+    if not arguments then
+        return nil
+    end
+    -- Use named children to avoid depending on raw child indices
+    local named = {}
+    for child in arguments:iter_children() do
+        if child:named() then
+            table.insert(named, child)
+        end
+    end
+    return named[2]
 end
 
 local get_named_children = function(node)
@@ -53,7 +74,7 @@ end
 
 local list_entries = function(call_node)
     local list = get_second_arg_node(call_node)
-    if list:type() ~= "list" then
+    if not list or list:type() ~= "list" then
         return {}
     end
     return get_named_children(list)
@@ -166,14 +187,21 @@ M.get_calls = function(bufnr)
         local func_name = ts.get_node_text(func:field("name")[1], bufnr)
 
         local arguments = call:field("arguments")[1]
-        local params_node = arguments:child(1)
-        if params_node:type() ~= "string" then
+        local first_named = nil
+        for child in arguments:iter_children() do
+            if child:named() then
+                first_named = child
+                break
+            end
+        end
+        local params_node = first_named
+        if not params_node or params_node:type() ~= "string" then
             local row = call:start()
             warn(
                 string.format(
                     "couldn't parse params (line %d)\n  expected `string`\n  got `%s`",
                     row,
-                    params_node:type()
+                    params_node and params_node:type() or "nil"
                 )
             )
             return
