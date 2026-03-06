@@ -2,70 +2,24 @@
 
 ## Short summary
 
-Helps navigating `pytest.mark.parametrize` entries and fixtures by virtual text and jump to declaration commands, using `pytest`s cache and `treesitter`.
-
-![pytrize](https://user-images.githubusercontent.com/23341710/143510539-c025925c-0e4c-4990-83ab-1c0da076c0f8.gif)
-
-## What problems does this plugin solve?
-
-### Parametrize
-
-`pytest` is amazing! The only thing that bothers me from time to time is if there are many entries in the parametrization of the test.
-If a test fails you might see for example:
-
-```
-test.py::test[None2-a1-b-c1-8]
-```
-
-Now you want to see what test case this actually corresponds to.
-What I sometimes do is to go to the entries in `pytest.mark.parametrize` and count the entries until I'm at the right one.
-But this is really not nice and easy to make a mistake, we should let the computer do this for us.
-
-Enter `pytrize`.
-
-### Fixture
-
-Another issue is knowing where a certain fixture is defined and what it does.
+Helps navigating pytest fixtures by providing jump to declaration, rename, and find usages commands, using `treesitter`.
 
 ## What does the plugin do?
 
-Several things:
-
-- Populates virtual text at the entries of `pytest.mark.parametrize` (see gif above), such that you can easily see which one is which.
-  Done by calling `Pytrize` (and `PytrizeClear` to clear them).
-  Alternatively `lua require('pytrize.api').set()` (and `lua require('pytrize.api').clear()`).
-- Provides a command to jump to the corresponding entry in `pytest.mark.parametrize` based on the test-case id under the cursor (see gif above).
-  Done by calling `PytrizeJump`.
-  Alternatively `lua require('pytrize.api').jump()`.
-  See the [Input](#input)-section below for cases where the file-path is not available.
-- Provides a command to jump to the declaration of the fixture under the cursor (by name), see [fixture](#jump-to-fixture) below.
+- **Jump to fixture definition** — jump to the declaration of the fixture under the cursor.
   Done by calling `PytrizeJumpFixture`.
   Alternatively `lua require('pytrize.api').jump_fixture()`.
-- Provides a command to rename the fixture under the cursor (by name), see [fixture](#rename-fixture) below.
+  See [Jump to fixture](#jump-to-fixture) below.
+- **Rename fixture** — rename the fixture under the cursor across the project.
   Done by calling `PytrizeRenameFixture`.
   Alternatively `lua require('pytrize.api').rename_fixture()`.
-- Provides a command to find all usages of the fixture under the cursor across the project, see [fixture usages](#fixture-usages) below.
+  See [Rename fixture](#rename-fixture) below.
+- **Find fixture usages** — find all usages of the fixture under the cursor across the project.
   Done by calling `PytrizeFixtureUsages`.
   Alternatively `lua require('pytrize.api').fixture_usages()`.
+  See [Fixture usages](#fixture-usages) below.
 
 ## Installation
-
-For example using [`packer`](https://github.com/wbthomason/packer.nvim):
-
-```lua
-use { -- pytrize {{{
-  'sigfriedcub1990/nvim-pytrize.lua',
-  -- uncomment if you want to lazy load
-  -- cmd = {'Pytrize', 'PytrizeClear', 'PytrizeJump'},
-  -- uncomment if you want to lazy load but not use the commands
-  -- module = 'pytrize',
-  config = function()
-    require("pytrize").setup({
-      -- metrics = true, -- uncomment to log timing info for jump and rename
-    })
-  end,
-} -- }}}
-```
 
 For example using [`lazy.nvim`](https://github.com/folke/lazy.nvim):
 
@@ -73,17 +27,15 @@ For example using [`lazy.nvim`](https://github.com/folke/lazy.nvim):
 {
   'sigfriedcub1990/nvim-pytrize.lua',
   version = '*',
-  dependencies = { 'nvim-lua/plenary' },
   ft = 'python', -- Load only for python files
   opts = {
     -- metrics = true, -- uncomment to log timing info for jump and rename
+    -- preferred_input = 'fzf-lua', -- uncomment to use fzf-lua for fixture usages
   },
   -- uncomment if you want to lazy load
-  -- cmd = {'Pytrize', 'PytrizeClear', 'PytrizeJump'},
-} -- }}}
+  -- cmd = {'PytrizeJumpFixture', 'PytrizeRenameFixture', 'PytrizeFixtureUsages'},
+}
 ```
-
-Requires [`plenary.nvim`](https://github.com/nvim-lua/plenary.nvim).
 
 ## Configuration
 
@@ -94,22 +46,16 @@ Requires [`plenary.nvim`](https://github.com/nvim-lua/plenary.nvim).
   no_commands = false,
   highlight = 'LineNr',
   metrics = false,
-  preferred_input = 'fzf-lua',
+  preferred_input = nil,
 }
 ```
 
 where:
 
-- `no_commands` can be set to `true` and the commands `Pytrize` etc won't be declared.
-- `highlight` defines the highlighting used for the virtual text.
+- `no_commands` can be set to `true` and the user commands won't be declared.
+- `highlight` defines the highlighting used for virtual text.
 - `metrics` when set to `true`, logs timing information via `vim.notify` after each jump-to-fixture and rename operation. Useful for understanding performance in large projects. The jump reports total time and index-build time; the rename reports total, grep, scoping (fixture resolution), and apply time.
 - `preferred_input` which method to use for displaying results (if installed). Currently `'fzf-lua'` is supported — when set, fixture usages are displayed in an [`fzf-lua`](https://github.com/ibhagwan/fzf-lua) picker instead of the quickfix list. When `nil` (the default), results go to the quickfix list.
-
-## Details
-
-- `pytest`s cache is used to find the test-case ids (eg `test.py::test[None2-a1-b-c1-8]`) which means that the tests have to be run at least once.
-  Also old ids might confuse `pytrize`, but you can clear the cache with `pytest --cache-clear`.
-- `treesitter` is used to find the correct entry in `pytest.mark.parametrize`.
 
 ## Jump to fixture
 
@@ -118,7 +64,7 @@ To jump to the declaration of a fixture under the cursor, do `PytrizeJumpFixture
 
 ## Rename fixture
 
-To rename the fixture under the cursor, do `PytrizeRenameFixture`:
+To rename the fixture under the cursor, do `PytrizeRenameFixture`.
 
 ## Fixture usages
 
@@ -126,18 +72,6 @@ To find all usages of the fixture under the cursor, do `PytrizeFixtureUsages`.
 
 Results are loaded into Neovim's quickfix list and the quickfix window is opened automatically.
 Each entry shows the file, line, and the line content where the fixture is used — as a parameter, a body reference, or inside `@pytest.mark.usefixtures(...)`. The fixture definition itself is excluded from the results.
-
-## Input
-
-In some cases the file-path is not printed by pytest, for example when a test fails when it might look something like:
-
-```
-
-_________________________________ test[None2-a1-b-c1-9] _________________________________
-```
-
-or similar.
-If you trigger to jump to the declaration of the parameters in this case `pytrize` will find all files in the cache that matches this test-case id and if there is more than one ask you which one to jump to (via `vim.ui.select`).
 
 ### fzf-lua
 
