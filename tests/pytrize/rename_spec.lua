@@ -308,7 +308,7 @@ describe("rename - cross-file fixture scoping", function()
 	end)
 
 	it("renaming fixture in conftest only renames usage in file_a, not in file_b which has its own definition", function()
-		vim.fn.mkdir(tmp_root .. "/.pytest_cache", "p")
+		vim.fn.mkdir(tmp_root .. "/.git", "p")
 
 		write_py(tmp_root .. "/conftest.py", {
 			"import pytest",

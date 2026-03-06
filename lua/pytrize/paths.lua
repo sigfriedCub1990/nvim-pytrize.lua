@@ -3,11 +3,9 @@ local M = {}
 local warn = require("pytrize.warn").warn
 
 local root_markers = {
-    ".pytest_cache",
     "pyproject.toml",
     "setup.py",
     "setup.cfg",
-    "pytest.ini",
     "tox.ini",
     ".git",
 }
@@ -40,7 +38,7 @@ M.split_at_root = function(file)
             return dir, join_path(rel_file_fragments)
         end
     end
-    warn("couldn't find the pytest root dir")
+    warn("couldn't find the project root dir")
 end
 
 M.get_conftest_chain = function(filepath, root_dir)
@@ -68,10 +66,6 @@ M.get_conftest_chain = function(filepath, root_dir)
     end
 
     return chain
-end
-
-M.get_nodeids_path = function(rootdir)
-    return join_path({ rootdir, ".pytest_cache", "v", "cache", "nodeids" })
 end
 
 return M
