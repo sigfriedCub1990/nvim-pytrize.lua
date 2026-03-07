@@ -72,6 +72,8 @@ To rename the fixture under the cursor, do `PytrizeRenameFixture`.
 
 To find all usages of the fixture under the cursor, do `PytrizeFixtureUsages`.
 
+![fixture_usages](https://github.com/user-attachments/assets/167eb4bd-58a1-48fc-a19c-64168172aa85)
+
 Results are loaded into Neovim's quickfix list and the quickfix window is opened automatically.
 Each entry shows the file, line, and the line content where the fixture is used — as a parameter, a body reference, or inside `@pytest.mark.usefixtures(...)`. The fixture definition itself is excluded from the results.
 
