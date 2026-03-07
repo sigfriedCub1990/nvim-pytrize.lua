@@ -66,6 +66,8 @@ To jump to the declaration of a fixture under the cursor, do `PytrizeJumpFixture
 
 To rename the fixture under the cursor, do `PytrizeRenameFixture`.
 
+![rename_fixture](https://github.com/user-attachments/assets/93bd2db7-7294-4d6c-921d-53c794cac9f9)
+
 ## Fixture usages
 
 To find all usages of the fixture under the cursor, do `PytrizeFixtureUsages`.
